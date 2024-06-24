@@ -1,0 +1,43 @@
+from datetime import datetime
+from datetime import timedelta
+import sys
+from io import StringIO
+
+#1
+input_data = """2024-06-24\t15:34\t7\tCheese\t9.99\tCash
+2024-06-24\t16\t8\tPepperoni\t10.99\tCash"""
+sys.stdin = StringIO(input_data)
+
+time_now = datetime.now()
+
+for line in sys.stdin:
+    data = line.strip().split("\t")
+    if len(data) == 6:
+        date, time, store, item, cost, payment = data
+        time = time_now
+        print(f"{item}\t{cost}")
+
+
+#2
+time_plus_day = time_now + timedelta(days=1)
+print(time_plus_day)
+
+time_minus_one_minute = time_now - timedelta(seconds=60)
+print(time_minus_one_minute)
+
+time_plus_two_years = time_now.replace(year=time_now.year + 2)
+print(time_plus_two_years)
+
+
+
+#3
+timedelta_object = timedelta(days=100, hours=10, minutes=13)
+print(timedelta_object)
+
+#4
+def count_down(feet, inches, time):
+    print(f"I will steal {feet} feet and {inches} inches of cheese from the chesse factory in {time}")
+
+count_down(12, 5, time_now + timedelta(days=3))
+
+print('Type :- ',type(time_now))
