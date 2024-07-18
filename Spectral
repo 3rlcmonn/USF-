@@ -3,6 +3,7 @@ from sklearn.cluster import KMeans
 import sklearn.datasets
 import matplotlib.pyplot as plt
 
+#Documentation for this code at https://github.com/3rlcmonn/USF-/blob/main/Documentation%20for%20Spectral%20Clustering.odt
 #Symmetric Normalized Spectral Clustering according to Ng, Jordan, and Weiss (2002)
 
 # Round all output to 2 decimal paces for better readability
