@@ -1,0 +1,133 @@
+import numpy as np
+from sklearn.cluster import KMeans
+import sklearn.datasets
+import matplotlib.pyplot as plt
+
+#Symmetric Normalized Spectral Clustering according to Ng, Jordan, and Weiss (2002)
+
+# Round all output to 2 decimal paces for better readability
+np.set_printoptions(linewidth=120, suppress=True, formatter={'float': '{: 0.2f}'.format})
+
+#Data to Cluster
+data, notused = sklearn.datasets.make_circles(n_samples=300, shuffle=True, noise=0.05, random_state=None, factor=0.5)
+
+
+
+def main(data, k):
+    #Constructing W Similiarity Matrix
+    def construct_L_sym(data):
+        n = len(data)
+        W = np.empty([n, n])
+        omega = 0.1
+
+        for i in range(n):
+            for j in range(n):
+                if i != j:
+                    W[i, j] = np.exp(-np.linalg.norm(data[i] - data[j]) ** 2 / (2 * omega ** 2))
+                else:
+                    W[i, j] = 0
+
+        #Constructing D Diagonal Matrix
+        D = np.diag(W.sum(axis=1))
+
+        #Laplacian Matrix = Diagonal Matrix - Weighted Adjacency Matrix
+        L = D - W
+
+        #Symmetrically Normalized Laplacian MAtrix = (D^-(0.5)) * L * (D)^-(0.5))
+        D_inv_sqrt = np.diag(1 / np.sqrt(D.diagonal()))
+        L_sym = np.matmul(D_inv_sqrt, np.matmul(L, D_inv_sqrt))
+        return L_sym
+
+    L_sym = construct_L_sym(data)
+
+
+
+    def construct_norm_U_k(Matrix):
+        #Find eigenvalues / eigenvectors of the Laplacian (or Normalized Laplacian) matrix
+        eigenvalues, U = np.linalg.eigh(Matrix)
+        #print(f"The Eigenvalues are {eigenvalues}")
+        #print(f"The Eigenvectors are {U}")
+
+        #Take only first k eigenectors
+
+        U_k = U[:, :k]
+
+        #Normalize U_k
+        #Compute the norm of each row
+        row_norms = np.linalg.norm(U_k, axis=1, keepdims=True)
+        normalized_U = U_k / row_norms
+        return normalized_U
+
+    normalized_U = construct_norm_U_k(L_sym)
+
+
+    #For printing which nodes belong to which cluster
+    def print_nodes(labels):
+        for cluster in range(k):
+            nodes = np.where(labels == cluster)[0] + 1
+            print(f"Nodes in cluster {cluster + 1}: {nodes} \n")
+
+
+
+    #Spectral Clustering
+    def spectral():
+        #Perform K-means clustering on the top k eigenvectors
+        spectral_kmeans = KMeans(n_clusters=k)
+        spectral_kmeans.fit(normalized_U)
+
+        #Get the labels
+        spectral_labels = spectral_kmeans.labels_
+
+        #Print the Spectral Clusters
+        print("Clusters according to Spectral Clustering \n")
+
+        #Print which nodes belong to Spectral Clusters
+        print_nodes(spectral_labels)
+        return spectral_labels
+
+    spectral_labels = spectral()
+
+
+    #K-Means Clustering
+    def kmeans():
+        kmeans = KMeans(n_clusters=k)
+        kmeans.fit(data)
+
+        #Get the cluster centers and labels
+        kmeans_centroids = kmeans.cluster_centers_
+        kmeans_labels = kmeans.labels_
+
+        #Print the K-means Clusters and Centers
+        print("Clusters according to K-Means Clustering \n")
+        print(f"Cluster centers: \n {kmeans_centroids} \n")
+
+        #Print which nodes belong to K-Means Clusters
+        print_nodes(kmeans_labels)
+        return kmeans_labels
+
+    kmeans_labels = kmeans()
+
+
+
+    #Visualizing Data
+    # Plotting the results
+    fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+
+    #Spectral Clustering plot
+    axs[0].scatter(data[:, 0], data[:, 1], c=spectral_labels)
+    axs[0].set_title('Spectral Clustering')
+    axs[0].set_xlabel('X')
+    axs[0].set_ylabel('Y')
+
+    #K-means Clustering plot
+    axs[1].scatter(data[:, 0], data[:, 1], c=kmeans_labels)
+    axs[1].set_title('K-means Clustering')
+    axs[1].set_xlabel('X')
+    axs[1].set_ylabel('Y')
+
+    plt.show()
+
+main(data, 2)
+
+
+
